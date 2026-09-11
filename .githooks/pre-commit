@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — versioned FDC hook. Activated per clone by
+# `bash scripts/fdc.sh install-hook` (or `doctor`), which sets
+# `git config core.hooksPath .githooks`. Lives in git so a hook change reaches
+# every clone on the next pull.
+exec "$(git rev-parse --show-toplevel)/scripts/check-docs-fresh.sh"
