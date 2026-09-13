@@ -196,7 +196,7 @@ Two rules are per-repo choices, filled at bootstrap:
 
 | Policy | A | B |
 |---|---|---|
-| **Credentials** | *Documented in place*: infrastructure is local (VPN/LAN only) and credentials rotate often, so each folder doc's `## Access` table holds the real value with a `Rotated on` date. Rotation = update the row, `rg` the old value. | *Vault reference*: the table holds `<vault: item>`; values never enter git. |
+| **Credentials** | *Documented in place*: infrastructure is local (VPN/LAN only) and credentials rotate often, so each folder doc's `## Access` table holds the real value with a `Rotated on` date. Rotation = update the row, `rg` the old value. Credentials already inside tracked config files are part of the policy, not a finding. | *Vault reference*: the table holds `<vault: item>`; values never enter git. |
 | **Commits** | *Milestone commits by the agent*: commit when a verified, coherent piece of work is done; stage only your own files (several sessions may share the checkout); never amend/rebase/force/push. | *User commits*: show `git status` / `git diff --stat` and stop. |
 
 Policy A for credentials is a deliberate trade: it puts secrets in git in exchange for an agent that can find and use them without a vault round-trip. It is only defensible when the repo is private, the blast radius is a LAN, **and there is one user** — for `FDC_TEAM=team` the pre-commit check refuses policy A unless `scripts/fdc.conf` carries `FDC_CREDENTIALS_OVERRIDE="<reason>"`, and `doctor` then shows that reason as a standing warning. Every disk holding such a repo should be encrypted.

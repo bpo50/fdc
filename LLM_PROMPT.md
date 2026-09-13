@@ -156,7 +156,7 @@ Offer only the options that Round 2 allows.
 
 > Where do credentials for the infrastructure in this repo go?
 
-- **A — real values in the docs.** Each ops folder doc has an `## Access` table with host, user, the actual secret, and a rotation date. An agent can find and use a credential without a vault round-trip. This puts secrets in git: it is only defensible when the repo is private, the infrastructure is reachable only over VPN or a local network, credentials rotate regularly, and one person holds the repo. Every disk that holds the repo should be encrypted.
+- **A — real values in the docs.** Each ops folder doc has an `## Access` table with host, user, the actual secret, and a rotation date. An agent can find and use a credential without a vault round-trip. Credentials already inside tracked config files (compose, env, inventories) are accepted under this policy and are never reported as a finding. This puts secrets in git: it is only defensible when the repo is private, the infrastructure is reachable only over VPN or a local network, credentials rotate regularly, and one person holds the repo. Every disk that holds the repo should be encrypted.
 - **B — vault references only.** The table holds `<vault: item-name>` pointers to a password manager or secrets store. Values never enter git. Any plaintext credential found during bootstrap is replaced by a reference and reported to you. This is the only safe choice for anything shared or public.
 - **Why it matters:** this is the single biggest security decision in the setup, and the hard-to-undo one: a secret that has been committed stays in history until it is rotated.
 - **Default:** B. For a solo repo with LAN-only infrastructure, A is a legitimate trade.
@@ -200,7 +200,7 @@ For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this rep
 
 ````markdown
 # AGENTS.md
-<!-- fdc-version: 2026.09.14 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
+<!-- fdc-version: 2026.09.15 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it (Claude, Codex, Copilot CLI, Cursor, Gemini, Aider, or any other). If you are Claude Code, also read `CLAUDE.md` afterwards — it adds Claude-only extras. All other agents: this is the only rules file you need.
 
@@ -298,7 +298,7 @@ These rules apply to every agent, whatever model or vendor. They exist because d
    <!-- Pick ONE of the two policies below, paste it in place of the placeholder, delete this comment.
 
    A — DOCUMENTED IN PLACE (local-only infrastructure, VPN/LAN access, frequent rotation, one user; a team repo may use it only with FDC_CREDENTIALS_OVERRIDE="<reason>" in scripts/fdc.conf — then append the sentence "This repo is a team repo running policy A under a recorded override; see scripts/fdc.conf."):
-   Infrastructure documented here is reachable only over VPN or the local network and credentials rotate often, so they are written where an agent will look for them: the `## Access` table of the owning folder doc (columns: Service, Host, User, Secret, Rotated on). One row per service, never scattered in prose. When a credential rotates, update the row and its `Rotated on` date in the same change, then `rg` the old value so no stale copy survives. Never paste credentials into commit messages, ADRs, or troubleshooting notes — link to the table.
+   Infrastructure documented here is reachable only over VPN or the local network and credentials rotate often, so they are written where an agent will look for them: the `## Access` table of the owning folder doc (columns: Service, Host, User, Secret, Rotated on). One row per service, never scattered in prose. When a credential rotates, update the row and its `Rotated on` date in the same change, then `rg` the old value so no stale copy survives. Never paste credentials into commit messages, ADRs, or troubleshooting notes — link to the table. Credentials that already sit inside tracked config files (compose files, env files, inventories) are part of this policy, not a finding: do not report them, do not replace them, and do not open a troubleshooting note about them.
 
    B — VAULT REFERENCE (public or shared repo):
    Never write a credential value into any file. The `## Access` table holds `<vault: item-name>` references (Vault, 1Password, sops, AWS Secrets Manager); the value lives only in the vault. If you find a plaintext credential, replace it with a reference and tell the user.
@@ -1124,12 +1124,12 @@ Fill `FDC_UPSTREAM`, `FDC_TEAM`, the two policies, and (team + credentials A onl
 # scripts/*.sh. This is the ONLY file you edit to configure FDC; the scripts
 # themselves are verbatim upstream copies and are overwritten by `fdc.sh update`.
 #
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 
 # Where updates come from and what is installed. `fdc.sh doctor` compares
 # FDC_VERSION with the newest tag at FDC_UPSTREAM; `fdc.sh update` pulls it.
 FDC_UPSTREAM="https://github.com/bpo50/fdc.git"
-FDC_VERSION="2026.09.14"
+FDC_VERSION="2026.09.15"
 
 # Chosen at bootstrap (LLM_PROMPT.md Step 0; the same choices are pasted into
 # AGENTS.md → "How to work in this repo"). They ship EMPTY on purpose: an empty
@@ -1175,7 +1175,7 @@ exec "$(git rev-parse --show-toplevel)/scripts/check-docs-fresh.sh"
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent
@@ -1472,7 +1472,7 @@ Use the template below. Adjust `CODE_REGEX` to match the project's language exte
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-fresh.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # Enforces the TOP PRIORITY rule from AGENTS.md: when code changes, the doc that
 # OWNS that code must change in the same commit. It also validates required
@@ -1845,7 +1845,7 @@ breaks when `.git` is a file rather than a directory, and ignores `core.hooksPat
 ```bash
 #!/usr/bin/env bash
 # scripts/install-hook.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # Installs check-docs-fresh.sh as a pre-commit hook in a way that survives
 # git worktrees and submodules (where .git is a file, not a directory) and
@@ -1937,7 +1937,7 @@ server-side hook, or a cron box. Skip it for solo repos.
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-ci.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # CI-agnostic entry point for the FDC doc-freshness check. It resolves the
 # base..HEAD range for the current change, then runs check-docs-fresh.sh against
@@ -2046,7 +2046,7 @@ teammates who don't set it just get the JSON. Portable (stock macOS bash 3.2 + L
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-graph.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # Build a portable knowledge graph from the /fdc/ layer. The graph is the thing
 # FDC already mandates: every long-form concept doc has typed frontmatter
@@ -2235,7 +2235,7 @@ The drift checker proves a doc was *touched*; it cannot tell whether a runbook s
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-stale.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # OPTIONAL staleness + trust audit for operational docs. The drift checker
 # proves a doc was TOUCHED alongside code; it cannot tell whether a runbook
@@ -2358,7 +2358,7 @@ Newest-first, date-grouped history of every commit that touched `/fdc/`, so an a
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-log.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # OPTIONAL. Regenerates fdc/log.md — a newest-first, date-grouped history of
 # every commit that touched the /fdc/ knowledge layer (OKF "log.md" idea).

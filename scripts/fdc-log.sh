@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc-log.sh
-# fdc-version: 2026.09.14
+# fdc-version: 2026.09.15
 #
 # OPTIONAL. Regenerates fdc/log.md — a newest-first, date-grouped history of
 # every commit that touched the /fdc/ knowledge layer (OKF "log.md" idea).

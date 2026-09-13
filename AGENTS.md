@@ -1,5 +1,5 @@
 # AGENTS.md
-<!-- fdc-version: 2026.09.14 -->
+<!-- fdc-version: 2026.09.15 -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it. If you are Claude Code, also read `CLAUDE.md` afterwards.
 

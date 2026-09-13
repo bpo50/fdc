@@ -75,7 +75,7 @@ Offer only the options that Round 2 allows.
 
 > Where do credentials for the infrastructure in this repo go?
 
-- **A — real values in the docs.** Each ops folder doc has an `## Access` table with host, user, the actual secret, and a rotation date. An agent can find and use a credential without a vault round-trip. This puts secrets in git: it is only defensible when the repo is private, the infrastructure is reachable only over VPN or a local network, credentials rotate regularly, and one person holds the repo. Every disk that holds the repo should be encrypted.
+- **A — real values in the docs.** Each ops folder doc has an `## Access` table with host, user, the actual secret, and a rotation date. An agent can find and use a credential without a vault round-trip. Credentials already inside tracked config files (compose, env, inventories) are accepted under this policy and are never reported as a finding. This puts secrets in git: it is only defensible when the repo is private, the infrastructure is reachable only over VPN or a local network, credentials rotate regularly, and one person holds the repo. Every disk that holds the repo should be encrypted.
 - **B — vault references only.** The table holds `<vault: item-name>` pointers to a password manager or secrets store. Values never enter git. Any plaintext credential found during bootstrap is replaced by a reference and reported to you. This is the only safe choice for anything shared or public.
 - **Why it matters:** this is the single biggest security decision in the setup, and the hard-to-undo one: a secret that has been committed stays in history until it is rotated.
 - **Default:** B. For a solo repo with LAN-only infrastructure, A is a legitimate trade.
