@@ -38,7 +38,7 @@ grep -nE '^(CODE_REGEX|CODE_BASENAME_REGEX|DOC_REGEX|SKIP_FILE_REGEX|SKIP_FOLDER
 curl -fsSL https://raw.githubusercontent.com/bpo50/fdc/main/install.sh | bash -s -- init     # or FDC_UPSTREAM=<path-or-url> …
 ```
 
-Then write the captured values into `scripts/fdc.conf` **only where they differ from the shipped defaults** (top of the new `check-docs-fresh.sh`), fill `FDC_TEAM` and the two policies (ask; see Step 2), and delete the old `.git/hooks/pre-commit` wrapper if `install.sh` reported `core.hooksPath=.githooks` (the old file is harmless but confusing). Show the user the diff of `fdc.conf` before moving on.
+Then write the captured values into `scripts/fdc.conf` **only where they differ from the shipped defaults** (top of the new `check-docs-fresh.sh`), fill `FDC_TEAM` and the two policies if they are empty (ask; see Step 2), and if the file says `FDC_TEAM="team"` with `FDC_CREDENTIALS_POLICY="A"` and no `FDC_CREDENTIALS_OVERRIDE`, ask the user for the reason (or to switch to B) — the pre-commit check refuses commits until one of the two is done, and delete the old `.git/hooks/pre-commit` wrapper if `install.sh` reported `core.hooksPath=.githooks` (the old file is harmless but confusing). Show the user the diff of `fdc.conf` before moving on.
 
 # STEP 2 — Update `AGENTS.md` rules sections, keep project sections
 

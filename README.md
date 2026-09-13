@@ -104,9 +104,38 @@ policy A, commit policy A, everything tracked. Do not push.`
 [`LLM_PROMPT.md`](LLM_PROMPT.md) into the session — every script and template is inlined, so it
 installs the tooling too.
 
-**Already installed?** `bash scripts/fdc.sh doctor` says whether you are behind; `bash scripts/fdc.sh update`
-pulls the newest tagged scripts and hook while keeping `scripts/fdc.conf`. For the rules text and
-templates, paste [`LLM_UPDATE_PROMPT.md`](LLM_UPDATE_PROMPT.md).
+**Already installed? Updating an existing repo.** Two layers update separately: the scripts (plain
+copies, safe to overwrite) and the docs (`AGENTS.md`, templates — merged by an LLM, never
+overwritten).
+
+1. See whether you are behind:
+
+   ```bash
+   bash scripts/fdc.sh doctor      # prints installed vs newest tag, and warns on unset policies
+   ```
+
+2. Update the tooling. This replaces `scripts/*.sh` and the hook with the newest tagged versions and
+   keeps your `scripts/fdc.conf`. Review the diff, then commit it:
+
+   ```bash
+   bash scripts/fdc.sh update      # or: bash scripts/fdc.sh update 2026.09.13 to pin
+   git diff --stat
+   ```
+
+3. Update the rules text and templates. In a Claude Code session (or any agent that can fetch a
+   URL) opened inside the repo, type one line:
+
+   ```
+   Follow https://raw.githubusercontent.com/bpo50/fdc/latest/LLM_UPDATE_PROMPT.md step by step.
+   ```
+
+   It compares the `fdc-version` stamps, merges the new rules sections into `AGENTS.md` without
+   touching your project sections, and asks any bootstrap question your `scripts/fdc.conf` does not
+   answer yet (solo/team, credentials and commit policy, or the `FDC_CREDENTIALS_OVERRIDE` reason for a
+   team repo on policy A). Offline: paste [`LLM_UPDATE_PROMPT.md`](LLM_UPDATE_PROMPT.md) instead.
+
+Skipping step 2 and running only step 3 also works: the update prompt runs `fdc.sh update` itself
+when the scripts are behind.
 
 **Several machines or several people?** `doctor` at session start self-heals a fresh clone (hook,
 version, identity), briefs carry handoffs between sessions, and notes carry messages between people.
