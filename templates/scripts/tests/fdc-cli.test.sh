@@ -132,4 +132,14 @@ r=$(new_repo); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
 [[ "$out" == *"policy     WARN"* && "$out" == *"two admins on a LAN"* ]] && ok "doctor shows the override reason as a warning" || ko "doctor override" "$out"
 rm -rf "$r"
 
+# --- doctor: docs layer stamp vs tooling version ---
+r=$(new_repo); ( cd "$r" && printf '# AGENTS.md\n<!-- fdc-version: 2000.01.01 -->\n' > AGENTS.md ); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
+[[ "$out" == *"docs       WARN"* && "$out" == *"2000.01.01"* && "$out" == *"LLM_UPDATE_PROMPT"* ]] && ok "doctor warns when AGENTS.md stamp is behind FDC_VERSION" || ko "doctor docs behind" "$out"
+v=$(sed -n 's/^FDC_VERSION="\(.*\)"/\1/p' "$r/scripts/fdc.conf")
+( cd "$r" && printf '# AGENTS.md\n<!-- fdc-version: %s -->\n' "$v" > AGENTS.md ); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
+[[ "$out" == *"docs       OK"* ]] && ok "doctor reports docs OK when stamps match" || ko "doctor docs ok" "$out"
+( cd "$r" && rm AGENTS.md ); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
+[[ "$out" == *"docs       WARN"* && "$out" == *"no AGENTS.md"* ]] && ok "doctor warns when AGENTS.md is missing" || ko "doctor no agents" "$out"
+rm -rf "$r"
+
 echo; echo "$pass passed, $fail failed"; [[ $fail -eq 0 ]]

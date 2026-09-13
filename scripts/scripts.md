@@ -6,7 +6,7 @@
 
 | File | Purpose |
 |---|---|
-| `fdc.sh` | Entry point; `doctor` warns while the bootstrap policies are unset and shows the credentials override reason (`doctor`, `check`, `update`, `stale`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`, …). |
+| `fdc.sh` | Entry point; `doctor` warns while the bootstrap policies are unset, shows the credentials override reason, and warns when the `fdc-version` stamp in `AGENTS.md` is behind `FDC_VERSION` (docs layer needs `LLM_UPDATE_PROMPT.md`) (`doctor`, `check`, `update`, `stale`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`, …). |
 | `fdc.conf` | This repo's settings: solo, credentials B, commits A, upstream URL (GitHub). `FDC_CREDENTIALS_OVERRIDE` is empty (only meaningful for team + A). |
 | `check-docs-fresh.sh` | Pre-commit drift check + `/fdc/` metadata validator; also refuses team + credentials A without `FDC_CREDENTIALS_OVERRIDE`. |
 | `install-hook.sh` | Installs the pre-commit hook (worktree-safe, honors `core.hooksPath`, appends to an existing hook, leaves symlinked hooks alone). |

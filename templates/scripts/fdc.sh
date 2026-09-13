@@ -235,6 +235,13 @@ cmd_doctor() {
         elif [[ "$latest" != "${FDC_VERSION:-}" && "$latest" > "${FDC_VERSION:-}" ]]; then echo "   upstream   WARN  newer version $latest available (installed ${FDC_VERSION:-?}) — run: bash scripts/fdc.sh update"; warn=$((warn+1))
         else echo "   upstream   OK  $latest"; fi
     fi
+    # docs layer (AGENTS.md rules text) vs tooling version
+    if [[ -f AGENTS.md ]]; then
+        local ds; ds=$(sed -n 's/.*fdc-versio[n]: *\([0-9][0-9.]*\).*/\1/p' AGENTS.md | head -1)
+        if [[ -z "$ds" ]]; then echo "   docs       WARN  AGENTS.md has no fdc-version stamp — run LLM_UPDATE_PROMPT.md from upstream"; warn=$((warn+1))
+        elif [[ "$ds" != "${FDC_VERSION:-}" ]]; then echo "   docs       WARN  AGENTS.md rules text is $ds, tooling is ${FDC_VERSION:-?} — run LLM_UPDATE_PROMPT.md from upstream to merge the newer templates"; warn=$((warn+1))
+        else echo "   docs       OK  AGENTS.md rules text $ds matches tooling"; fi
+    else echo "   docs       WARN  no AGENTS.md — bootstrap (LLM_PROMPT.md) not run yet"; warn=$((warn+1)); fi
     # tools
     local missing=""; for t in rg fd jq yq; do command -v "$t" >/dev/null 2>&1 || missing="$missing $t"; done
     [[ -z "$missing" ]] && echo "   tools      OK  rg fd jq yq" || echo "   tools      --  missing:$missing (fall back to grep/find; see AGENTS.md)"

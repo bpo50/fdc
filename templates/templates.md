@@ -11,7 +11,7 @@
 
 | Template | Drop it at | Purpose |
 |---|---|---|
-| `scripts/fdc.sh` | `<repo-root>/scripts/fdc.sh` | Entry point: `doctor`, `check`, `install-hook`, `update`, `stale`, `log`, `graph`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`. |
+| `scripts/fdc.sh` | `<repo-root>/scripts/fdc.sh` | Entry point (`doctor` also compares the `AGENTS.md` stamp with `FDC_VERSION` and points at the update prompt when the docs layer is behind): `doctor`, `check`, `install-hook`, `update`, `stale`, `log`, `graph`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`. |
 | `scripts/fdc.conf` | `<repo-root>/scripts/fdc.conf` | Per-repo settings (upstream, version, team, policies, `FDC_CREDENTIALS_OVERRIDE`, thresholds, regex overrides). Ships with `FDC_UPSTREAM` pointing at `https://github.com/bpo50/fdc.git` and the three policy fields **empty** (empty = not decided; `doctor` warns). The only file a downstream repo edits under `scripts/`. |
 | `.githooks/pre-commit` | `<repo-root>/.githooks/pre-commit` | Versioned hook; `install-hook` sets `core.hooksPath` to it. |
 | `fdc/notes/notes.md` | `<repo-root>/fdc/notes/notes.md` | Notes index + template (messages with a lifecycle). |

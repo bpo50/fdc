@@ -111,7 +111,7 @@ overwritten).
 1. See whether you are behind:
 
    ```bash
-   bash scripts/fdc.sh doctor      # prints installed vs newest tag, and warns on unset policies
+   bash scripts/fdc.sh doctor      # installed vs newest tag; AGENTS.md stamp vs tooling; unset policies
    ```
 
 2. Update the tooling. This replaces `scripts/*.sh` and the hook with the newest tagged versions and
