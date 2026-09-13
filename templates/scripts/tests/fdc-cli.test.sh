@@ -123,4 +123,13 @@ out=$( cd "$r" && mkdir -p big && { echo "# big"; for i in $(seq 1 200); do echo
 [[ "$out" == *"fdc/work"* && "$out" == *"archive"* ]] && ok "budget reports lines per area incl. work and archive" || ko "budget areas"
 rm -rf "$r"
 
+# --- doctor: policy reporting ---
+r=$(new_repo); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
+[[ "$out" == *"policy     WARN"* && "$out" == *"not set"* ]] && ok "doctor warns when bootstrap policies are still unset" || ko "doctor unset policies" "$out"
+( cd "$r" && printf 'FDC_TEAM="team"\nFDC_CREDENTIALS_POLICY="A"\nFDC_COMMIT_POLICY="A"\n' >> scripts/fdc.conf ); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
+[[ "$out" == *"policy     ERROR"* && "$out" == *"FDC_CREDENTIALS_OVERRIDE"* ]] && ok "doctor reports team + A without override as ERROR" || ko "doctor team+A" "$out"
+( cd "$r" && printf 'FDC_CREDENTIALS_OVERRIDE="two admins on a LAN"\n' >> scripts/fdc.conf ); out=$( cd "$r" && bash scripts/fdc.sh doctor 2>&1 )
+[[ "$out" == *"policy     WARN"* && "$out" == *"two admins on a LAN"* ]] && ok "doctor shows the override reason as a warning" || ko "doctor override" "$out"
+rm -rf "$r"
+
 echo; echo "$pass passed, $fail failed"; [[ $fail -eq 0 ]]

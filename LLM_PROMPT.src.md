@@ -75,20 +75,11 @@ Then **report**:
 
 5. **Planning-tool folders** (`docs/superpowers/`, `docs/plans/`, `.planning/`): their contents move to `fdc/work/` in Step 2 and the tool is pointed there from now on (`AGENTS.md` rule 15).
 
-Then **ask the user**:
+Keep the report to what the commands showed. If an existing rules file or config already states a policy, mention that a conflict exists in one neutral sentence; do not paste the file's wording into your report or your questions, and do not treat a value that shipped in `scripts/fdc.conf` as a decision — the policy fields there are empty until the user answers below.
 
-- "The folders I'll create indexes for are: \[list]. Anything to add or remove?"
-- "Should `/fdc/` be tracked in git or gitignored (local-only)?"
-- "Should `AGENTS.md` / `CLAUDE.md` themselves be tracked or gitignored?"
-- "Are there folders I should explicitly NOT touch (third-party submodules, vendored code)?"
-- "Solo or team? (**team** = more than one person commits here. Team ⇒ credentials policy must be B, the CI backstop is required, `fdc/log.md` is gitignored.)"
-- "How many machines will you work from? (More than one ⇒ track all of `fdc/` in git; briefs and notes are the cross-machine handoff.)"
-- "Credentials policy — **A** (write real values in each folder doc's `## Access` table; only for a private repo whose infrastructure is VPN/LAN-only and rotates often) or **B** (vault references only)?"
-- "Commit policy — **A** (I commit verified milestones on the current branch, push when fast-forward, never rewrite history) or **B** (you commit; I stop at `git status`)?"
+Then **ask the questions below, exactly as written, in three rounds**. Wait for each round's answers before showing the next. If your tool offers a structured question widget, put the full option text (the bold label plus its consequence sentence) into the option, not a two-word summary. Do not create files speculatively.
 
-If the answer is **team**, do not accept credentials policy A — explain why (Convention 7) and use B.
-
-**Wait for answers before proceeding.** Do not create files speculatively.
+{{include:templates/SETUP_QUESTIONS.md}}
 
 # STEP 1 — Create the rules files
 
@@ -96,7 +87,7 @@ If the answer is **team**, do not accept credentials policy A — explain why (C
 
 Use the template below. Fill placeholders (`{{ … }}`) with project-specific values. Keep section ordering.
 
-For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this repo": paste the **A** or **B** paragraph the user chose in Step 0 (both are in the HTML comment under each placeholder), then delete that comment. Do not leave the placeholder, and do not pick for the user.
+For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this repo": paste the **A** or **B** paragraph the user chose in Step 0 (both are in the HTML comment under each placeholder), then delete that comment. Do not leave the placeholder, and do not pick for the user. A team repo on credentials policy A gets the extra override sentence named in that comment and nothing else — no ad-hoc deviation notes.
 
 > If `AGENTS.md` already exists with content, merge: keep existing content, prepend the FDC TOP PRIORITY section and the conventions, slot existing content into the right sections (Overview, Navigation, etc.).
 
@@ -211,7 +202,7 @@ Six scripts, one config file, one versioned hook. **Never edit the scripts** in 
 
 ## File: `scripts/fdc.conf` (the only file you configure)
 
-Fill `FDC_UPSTREAM`, `FDC_TEAM`, and the two policies from Step 0. Add `CODE_REGEX` / `SKIP_*` overrides only if the shipped defaults (top of `check-docs-fresh.sh`) don't fit — see "Project-type-specific guidance".
+Fill `FDC_UPSTREAM`, `FDC_TEAM`, the two policies, and (team + credentials A only) `FDC_CREDENTIALS_OVERRIDE` from the Step 0 answers. Leave a policy empty if the user did not answer it — `fdc.sh doctor` will keep asking. Add `CODE_REGEX` / `SKIP_*` overrides only if the shipped defaults (top of `check-docs-fresh.sh`) don't fit — see "Project-type-specific guidance".
 
 ```bash
 {{include:templates/scripts/fdc.conf}}
@@ -794,7 +785,9 @@ And the skip lists must cover every stack's generated artifacts: `SKIP_FILE_REGE
 
 4. **Don't commit during bootstrap.** Show `git status` and `git diff --stat` and ask before running `git commit`, whatever commit policy the user chose for daily work — the bootstrap diff is large and they should see it. Exception: if the repo has no commits yet (fresh `git init`), suggest the initial commit but still wait for confirmation.
 
-5. **The credentials policy is the user's choice (Step 0), not yours.** Under policy A, move any credentials you find into the owning folder doc's `## Access` table with a `Rotated on` date. Under policy B, replace them with `<vault: item>` references and tell the user which values you removed.
+5. **The credentials policy is the user's choice (Step 0), not yours.** Under policy A, move any credentials you find into the owning folder doc's `## Access` table with a `Rotated on` date. Under policy B, replace them with `<vault: item>` references and tell the user which values you removed. Team + A exists only with `FDC_CREDENTIALS_OVERRIDE`; the pre-commit check refuses it otherwise.
+
+5b. **Never quote the target repo inside a question.** The questions are fixed text (Step 0). Describe a conflict with existing files in one neutral sentence; the user knows their own repo and does not need it read back to them.
 
 6. **Respect gitignored areas.** Don't create docs inside `.git/`, `node_modules/`, `target/`, `vendor/`, etc. The drift checker's `SKIP_FOLDER_REGEX` lists the standard ones — match it.
 
@@ -817,7 +810,7 @@ When you finish this prompt's work, the repo should have:
 - [ ] Every existing long-form doc has a `status`; plans/specs are in `fdc/work/`; any findings register is split into `fdc/troubleshooting/` notes; `fdc.sh budget` shows the active layer under `FDC_BUDGET_TOTAL_LINES` (or the user has seen the number).
 - [ ] Every existing non-index `/fdc/` long-form doc has required frontmatter and `## See also`.
 - [ ] Per-folder `<folder>.md` index in every top-level folder in scope.
-- [ ] `scripts/fdc.sh`, `scripts/fdc.conf` (no `{{ }}` left), all six sibling scripts (executable), `scripts/scripts.md`, `.githooks/pre-commit`.
+- [ ] `scripts/fdc.sh`, `scripts/fdc.conf` (no `{{ }}` left; `FDC_TEAM` and both policies filled, `FDC_CREDENTIALS_OVERRIDE` set if team + A), all six sibling scripts (executable), `scripts/scripts.md`, `.githooks/pre-commit`.
 - [ ] Hook active: `git config core.hooksPath` = `.githooks` (`fdc.sh doctor` says OK).
 - [ ] (Teams) `scripts/check-docs-ci.sh` wired into CI as a required check; PR template in place; `fdc/log.md` gitignored.
 - [ ] `graphify-out/` added to `.gitignore` (if `fdc-graph.sh` is used).

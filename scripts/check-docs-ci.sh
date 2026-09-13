@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/check-docs-ci.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # CI-agnostic entry point for the FDC doc-freshness check. It resolves the
 # base..HEAD range for the current change, then runs check-docs-fresh.sh against

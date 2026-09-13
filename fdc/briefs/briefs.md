@@ -41,4 +41,4 @@ Tools, environments, hard limits.
 
 ## Index
 
-_No entries yet._
+- [Redesign the bootstrap questions](bootstrap-questions-redesign.md) — Make the Step 0 questions of LLM_PROMPT self-describing, ordered by dependency, free of project-specific example text, with a machine-readable override for team + credentials A. (`done`)

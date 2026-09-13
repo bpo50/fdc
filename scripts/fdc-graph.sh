@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc-graph.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Build a portable knowledge graph from the /fdc/ layer. The graph is the thing
 # FDC already mandates: every long-form concept doc has typed frontmatter

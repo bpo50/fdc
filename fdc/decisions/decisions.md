@@ -46,3 +46,4 @@ What changes downstream. What we now have to maintain or watch for.
 ## Index
 
 - 2026-09-11 — [Run FDC on the FDC reference repo itself](2026-09-11-dogfood-fdc-in-reference-repo.md) — The reference repo installs its own convention so the enforcement claim is demonstrated, not just described. (`accepted`)
+- 2026-09-13 — [Credentials override for team repos](2026-09-13-credentials-override-for-team-repos.md) — Team repos that insist on credentials policy A must record the reason in FDC_CREDENTIALS_OVERRIDE; without it the drift checker refuses every commit. (`accepted`)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc-stale.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # OPTIONAL staleness + trust audit for operational docs. The drift checker
 # proves a doc was TOUCHED alongside code; it cannot tell whether a runbook
@@ -16,10 +16,10 @@
 #
 # `verified` accepts three forms:
 #     verified: 2026-09-11
-#     verified: { by: human:bogdan, at: 2026-09-11 }
+#     verified: { by: human:alice, at: 2026-09-11 }
 #     verified:
 #       - { by: claude-code/fable-5.1, at: 2026-09-01 }
-#       - { by: human:bogdan, at: 2026-09-11 }
+#       - { by: human:alice, at: 2026-09-11 }
 #
 # It NEVER fails the build: exit code is always 0. Run it in CI for the report,
 # or by hand before an on-call rotation. Decisions and briefs are not audited.

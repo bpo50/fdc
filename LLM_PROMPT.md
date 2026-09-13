@@ -75,20 +75,118 @@ Then **report**:
 
 5. **Planning-tool folders** (`docs/superpowers/`, `docs/plans/`, `.planning/`): their contents move to `fdc/work/` in Step 2 and the tool is pointed there from now on (`AGENTS.md` rule 15).
 
-Then **ask the user**:
+Keep the report to what the commands showed. If an existing rules file or config already states a policy, mention that a conflict exists in one neutral sentence; do not paste the file's wording into your report or your questions, and do not treat a value that shipped in `scripts/fdc.conf` as a decision — the policy fields there are empty until the user answers below.
 
-- "The folders I'll create indexes for are: \[list]. Anything to add or remove?"
-- "Should `/fdc/` be tracked in git or gitignored (local-only)?"
-- "Should `AGENTS.md` / `CLAUDE.md` themselves be tracked or gitignored?"
-- "Are there folders I should explicitly NOT touch (third-party submodules, vendored code)?"
-- "Solo or team? (**team** = more than one person commits here. Team ⇒ credentials policy must be B, the CI backstop is required, `fdc/log.md` is gitignored.)"
-- "How many machines will you work from? (More than one ⇒ track all of `fdc/` in git; briefs and notes are the cross-machine handoff.)"
-- "Credentials policy — **A** (write real values in each folder doc's `## Access` table; only for a private repo whose infrastructure is VPN/LAN-only and rotates often) or **B** (vault references only)?"
-- "Commit policy — **A** (I commit verified milestones on the current branch, push when fast-forward, never rewrite history) or **B** (you commit; I stop at `git status`)?"
+Then **ask the questions below, exactly as written, in three rounds**. Wait for each round's answers before showing the next. If your tool offers a structured question widget, put the full option text (the bold label plus its consequence sentence) into the option, not a two-word summary. Do not create files speculatively.
 
-If the answer is **team**, do not accept credentials policy A — explain why (Convention 7) and use B.
+# Bootstrap questions
 
-**Wait for answers before proceeding.** Do not create files speculatively.
+Ask these in **three rounds**, in this order. Each round waits for answers before the next one is shown, because later options depend on earlier answers. Present every block **as written here**: the question, all options with their consequence line, the default, and what changes later. Do not shorten the options to a word or two, and do not add examples taken from the repository you are bootstrapping — describe a conflict with the repo's existing files in one neutral sentence, never by quoting them.
+
+Each block names the config field it writes (`scripts/fdc.conf`) so the answer lands in exactly one place.
+
+---
+
+## Round 1 — Scope
+
+### Q1. Which folders get an index doc?
+
+> The folders I will create `<folder-name>.md` in are: `[list from Step 0]`.
+> Anything to add or remove?
+
+- **Why it matters:** every listed folder gets a doc the pre-commit hook will insist on keeping in sync. Folders left out are invisible to future agent sessions.
+- **Default:** every top-level folder that holds code or configuration. Never build caches, dependency folders, or generated output.
+- **Later change:** cheap. Add a folder doc any time; the hook starts enforcing it on the next commit.
+- **Writes:** nothing in the config; it decides which files Step 3 creates.
+
+### Q2. Any folders I must not touch?
+
+> Are there folders I should leave exactly as they are, such as vendored third-party code, git submodules, or generated trees?
+
+- **Why it matters:** those folders get no index doc and are excluded from the drift check, so a change there never asks for a doc update.
+- **Default:** none beyond the standard skip list (dependency and build folders).
+- **Later change:** cheap. Add the path to `SKIP_FOLDER_REGEX` in the config.
+- **Writes:** `SKIP_FOLDER_REGEX` (only when the answer is not empty).
+
+---
+
+## Round 2 — Who works here
+
+### Q3. Solo or team?
+
+> Does more than one person commit to this repository?
+
+- **Solo** — one person commits, possibly through several agents and machines. The pre-commit hook alone is enough enforcement.
+- **Team** — two or more people commit. Consequences: the CI backstop script becomes a required check, a pull-request template with the definition of done is added, the generated `fdc/log.md` is gitignored (each machine regenerates it), and in Round 3 the credentials question changes shape.
+- **Why it matters:** this answer decides which credential options are safe to offer and how much of the enforcement has to live outside a single developer's machine.
+- **Default:** none; the answer must be explicit.
+- **Later change:** solo to team is a normal upgrade (run the update prompt). Team to solo is just a config edit.
+- **Writes:** `FDC_TEAM`.
+
+### Q4. How many machines?
+
+> Will you (or your agents) work on this repository from more than one machine?
+
+- **One machine** — local-only files are acceptable.
+- **More than one** — everything under `fdc/` must be tracked in git, because briefs and notes are the hand-off between machines.
+- **Why it matters:** decides whether the knowledge layer can live outside git at all.
+- **Default:** more than one.
+- **Later change:** cheap; start tracking the folder.
+- **Writes:** nothing; it constrains Q5.
+
+### Q5. What is tracked in git?
+
+> Should `fdc/`, `AGENTS.md`, and `CLAUDE.md` be committed, or kept local and gitignored?
+
+- **Track everything** — the docs travel with the code; every clone, teammate, and agent sees the same rules. This is the normal choice.
+- **Gitignore `fdc/` only** — the rules files are shared but the knowledge layer stays on this machine. Only sensible for a single machine and a repo you do not want to carry documentation history.
+- **Gitignore all three** — FDC becomes a private, per-machine layer on top of a repo you do not control. Nothing is enforced for anyone else.
+- **Why it matters:** an untracked knowledge layer cannot be the hand-off between sessions on different machines, and an untracked rules file means other contributors and agents never see the contract.
+- **Default:** track everything. Required when Q4 is "more than one" or Q3 is "team".
+- **Later change:** moving from gitignored to tracked is one commit; the other direction loses history for everyone else.
+- **Writes:** `.gitignore` entries in Step 5.
+
+---
+
+## Round 3 — How agents behave
+
+Offer only the options that Round 2 allows.
+
+### Q6. Credentials policy
+
+> Where do credentials for the infrastructure in this repo go?
+
+- **A — real values in the docs.** Each ops folder doc has an `## Access` table with host, user, the actual secret, and a rotation date. An agent can find and use a credential without a vault round-trip. This puts secrets in git: it is only defensible when the repo is private, the infrastructure is reachable only over VPN or a local network, credentials rotate regularly, and one person holds the repo. Every disk that holds the repo should be encrypted.
+- **B — vault references only.** The table holds `<vault: item-name>` pointers to a password manager or secrets store. Values never enter git. Any plaintext credential found during bootstrap is replaced by a reference and reported to you. This is the only safe choice for anything shared or public.
+- **Why it matters:** this is the single biggest security decision in the setup, and the hard-to-undo one: a secret that has been committed stays in history until it is rotated.
+- **Default:** B. For a solo repo with LAN-only infrastructure, A is a legitimate trade.
+- **Team repos:** A is refused by the pre-commit check. If the user still wants A, the config must carry `FDC_CREDENTIALS_OVERRIDE="<reason>"`, for example the number of people with access and the disk encryption in use. Ask for that reason, write it verbatim, and say in the report that the repo runs under an override. Do not invent a reason and do not write a free-text "deviation note" anywhere else.
+- **Later change:** B to A is a config edit. A to B means rotating every credential ever committed.
+- **Writes:** `FDC_CREDENTIALS_POLICY`, and `FDC_CREDENTIALS_OVERRIDE` when applicable; the matching paragraph in `AGENTS.md` rule 8.
+
+### Q7. Commit policy
+
+> Who runs `git commit` during normal work?
+
+- **A — the agent commits verified milestones.** After a coherent, verified piece of work the agent stages only the files it touched, runs the checks, commits with a descriptive message, and pushes when the push is a fast-forward. It never amends, rebases, resets, or forces, and never switches to `main` unasked. Best when several sessions or machines share the repo and you want the hand-off to be in git.
+- **B — you commit.** The agent never runs `git commit`. When work is done it shows `git status` and `git diff --stat` and stops. Best when you want to read every diff before it enters history.
+- **Why it matters:** decides whether an agent session can leave durable state behind without you at the keyboard.
+- **Default:** A for solo work across machines, B when you review every change.
+- **Later change:** cheap; swap the paragraph in `AGENTS.md` rule 9 and the config field.
+- **Writes:** `FDC_COMMIT_POLICY`; the matching paragraph in `AGENTS.md` rule 9.
+
+---
+
+## Derived, not asked
+
+State these as consequences in your summary instead of asking:
+
+| Answer | Consequence |
+|---|---|
+| Team | `scripts/check-docs-ci.sh` wired into CI; PR template installed; `fdc/log.md` gitignored. |
+| More than one machine | all of `fdc/` tracked in git. |
+| Credentials A on a team | `FDC_CREDENTIALS_OVERRIDE` set, reported as an override in the final report. |
+| Any policy left unanswered | leave the config field empty; `fdc.sh doctor` keeps warning until it is filled. Never fill a policy with a default. |
 
 # STEP 1 — Create the rules files
 
@@ -96,13 +194,13 @@ If the answer is **team**, do not accept credentials policy A — explain why (C
 
 Use the template below. Fill placeholders (`{{ … }}`) with project-specific values. Keep section ordering.
 
-For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this repo": paste the **A** or **B** paragraph the user chose in Step 0 (both are in the HTML comment under each placeholder), then delete that comment. Do not leave the placeholder, and do not pick for the user.
+For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this repo": paste the **A** or **B** paragraph the user chose in Step 0 (both are in the HTML comment under each placeholder), then delete that comment. Do not leave the placeholder, and do not pick for the user. A team repo on credentials policy A gets the extra override sentence named in that comment and nothing else — no ad-hoc deviation notes.
 
 > If `AGENTS.md` already exists with content, merge: keep existing content, prepend the FDC TOP PRIORITY section and the conventions, slot existing content into the right sections (Overview, Navigation, etc.).
 
 ````markdown
 # AGENTS.md
-<!-- fdc-version: 2026.09.11 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
+<!-- fdc-version: 2026.09.13 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it (Claude, Codex, Copilot CLI, Cursor, Gemini, Aider, or any other). If you are Claude Code, also read `CLAUDE.md` afterwards — it adds Claude-only extras. All other agents: this is the only rules file you need.
 
@@ -199,7 +297,7 @@ These rules apply to every agent, whatever model or vendor. They exist because d
 
    <!-- Pick ONE of the two policies below, paste it in place of the placeholder, delete this comment.
 
-   A — DOCUMENTED IN PLACE (local-only infrastructure, VPN/LAN access, frequent rotation):
+   A — DOCUMENTED IN PLACE (local-only infrastructure, VPN/LAN access, frequent rotation, one user; a team repo may use it only with FDC_CREDENTIALS_OVERRIDE="<reason>" in scripts/fdc.conf — then append the sentence "This repo is a team repo running policy A under a recorded override; see scripts/fdc.conf."):
    Infrastructure documented here is reachable only over VPN or the local network and credentials rotate often, so they are written where an agent will look for them: the `## Access` table of the owning folder doc (columns: Service, Host, User, Secret, Rotated on). One row per service, never scattered in prose. When a credential rotates, update the row and its `Rotated on` date in the same change, then `rg` the old value so no stale copy survives. Never paste credentials into commit messages, ADRs, or troubleshooting notes — link to the table.
 
    B — VAULT REFERENCE (public or shared repo):
@@ -534,7 +632,7 @@ These optional fields follow the [Open Knowledge Format](https://github.com/Goog
 generated: { by: claude-code/fable-5.1, at: 2026-09-11 }   # who/what wrote the current content
 verified:                                                  # who confirmed it against reality (latest wins)
   - { by: claude-code/fable-5.1, at: 2026-09-01 }
-  - { by: human:bogdan, at: 2026-09-11 }
+  - { by: human:alice, at: 2026-09-11 }
 stale_after: 2027-03-01          # absolute date; overrides the global staleness threshold for this doc
 sources:                         # what this doc was derived from (ticket, vendor page, commit, another fdc doc)
   - { id: incident-42, resource: https://tracker/…/42, title: Incident 42 }
@@ -1019,24 +1117,29 @@ Six scripts, one config file, one versioned hook. **Never edit the scripts** in 
 
 ## File: `scripts/fdc.conf` (the only file you configure)
 
-Fill `FDC_UPSTREAM`, `FDC_TEAM`, and the two policies from Step 0. Add `CODE_REGEX` / `SKIP_*` overrides only if the shipped defaults (top of `check-docs-fresh.sh`) don't fit — see "Project-type-specific guidance".
+Fill `FDC_UPSTREAM`, `FDC_TEAM`, the two policies, and (team + credentials A only) `FDC_CREDENTIALS_OVERRIDE` from the Step 0 answers. Leave a policy empty if the user did not answer it — `fdc.sh doctor` will keep asking. Add `CODE_REGEX` / `SKIP_*` overrides only if the shipped defaults (top of `check-docs-fresh.sh`) don't fit — see "Project-type-specific guidance".
 
 ```bash
 # scripts/fdc.conf — per-repo FDC settings. Plain bash, sourced by every
 # scripts/*.sh. This is the ONLY file you edit to configure FDC; the scripts
 # themselves are verbatim upstream copies and are overwritten by `fdc.sh update`.
 #
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 
 # Where updates come from and what is installed. `fdc.sh doctor` compares
 # FDC_VERSION with the newest tag at FDC_UPSTREAM; `fdc.sh update` pulls it.
 FDC_UPSTREAM="https://github.com/bpo50/fdc.git"
-FDC_VERSION="2026.09.11"
+FDC_VERSION="2026.09.13"
 
-# Chosen at bootstrap (see AGENTS.md → "How to work in this repo").
-FDC_TEAM="solo"               # solo | team   (team ⇒ credentials policy must be B, CI backstop mandatory)
-FDC_CREDENTIALS_POLICY="B"    # A = values in ## Access tables (private, LAN-only) | B = vault references
-FDC_COMMIT_POLICY="A"         # A = agent commits verified milestones | B = user commits
+# Chosen at bootstrap (LLM_PROMPT.md Step 0; the same choices are pasted into
+# AGENTS.md → "How to work in this repo"). They ship EMPTY on purpose: an empty
+# value means "not decided yet" — `fdc.sh doctor` warns until all three are set.
+FDC_TEAM=""                   # solo | team   (team = more than one person commits here ⇒ CI backstop, fdc/log.md gitignored)
+FDC_CREDENTIALS_POLICY=""     # A = real values in ## Access tables (private, LAN-only, one user) | B = vault references only
+FDC_COMMIT_POLICY=""          # A = agent commits verified milestones | B = user commits, agent stops at git status
+# Team + credentials A is refused by the pre-commit check unless you state why
+# it is acceptable here (e.g. "two admins, private LAN, encrypted disks").
+FDC_CREDENTIALS_OVERRIDE=""
 
 # Audit thresholds.
 FDC_STALE_DAYS=180            # runbooks / troubleshooting unverified longer than this are stale
@@ -1072,7 +1175,7 @@ exec "$(git rev-parse --show-toplevel)/scripts/check-docs-fresh.sh"
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent
@@ -1311,7 +1414,11 @@ cmd_doctor() {
     local missing=""; for t in rg fd jq yq; do command -v "$t" >/dev/null 2>&1 || missing="$missing $t"; done
     [[ -z "$missing" ]] && echo "   tools      OK  rg fd jq yq" || echo "   tools      --  missing:$missing (fall back to grep/find; see AGENTS.md)"
     # team safety
-    if [[ "${FDC_TEAM:-solo}" == team && "${FDC_CREDENTIALS_POLICY:-B}" == A ]]; then echo "   policy     WARN  FDC_TEAM=team with credentials policy A — switch to B"; warn=$((warn+1)); fi
+    if [[ -z "${FDC_TEAM:-}" || -z "${FDC_CREDENTIALS_POLICY:-}" || -z "${FDC_COMMIT_POLICY:-}" ]]; then echo "   policy     WARN  FDC_TEAM / FDC_CREDENTIALS_POLICY / FDC_COMMIT_POLICY not set in scripts/fdc.conf — bootstrap (LLM_PROMPT.md Step 0) not finished"; warn=$((warn+1))
+    elif [[ "$FDC_TEAM" == team && "$FDC_CREDENTIALS_POLICY" == A ]]; then
+        if [[ -n "${FDC_CREDENTIALS_OVERRIDE:-}" ]]; then echo "   policy     WARN  team repo with credentials policy A, override: $FDC_CREDENTIALS_OVERRIDE"; warn=$((warn+1))
+        else echo "   policy     ERROR team repo with credentials policy A and no FDC_CREDENTIALS_OVERRIDE — commits are blocked until you set it or switch to B"; warn=$((warn+1)); fi
+    fi
     # log: regenerate if gitignored (team mode) so it is fresh locally
     if [[ -d fdc ]] && git check-ignore -q fdc/log.md 2>/dev/null; then bash "$S/fdc-log.sh" >/dev/null 2>&1 && echo "   log        OK  fdc/log.md regenerated (gitignored)"; fi
     # notes + briefs
@@ -1358,7 +1465,7 @@ Use the template below. Adjust `CODE_REGEX` to match the project's language exte
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-fresh.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Enforces the TOP PRIORITY rule from AGENTS.md: when code changes, the doc that
 # OWNS that code must change in the same commit. It also validates required
@@ -1417,6 +1524,16 @@ fdc_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 if [[ "${SKIP_DOC_CHECK:-0}" == "1" ]]; then
     echo "[check-docs-fresh] SKIP_DOC_CHECK=1 set — bypassing check."
     exit 0
+fi
+
+# --- policy sanity -----------------------------------------------------------
+# A team repo may keep credentials policy A only with a written reason in
+# FDC_CREDENTIALS_OVERRIDE (see AGENTS.md rule 8 / METHODOLOGY Convention 7).
+# Unset policies (bootstrap not finished yet) never block a commit.
+if [[ "${FDC_TEAM:-}" == team && "${FDC_CREDENTIALS_POLICY:-}" == A && -z "${FDC_CREDENTIALS_OVERRIDE:-}" ]]; then
+    echo "[check-docs-fresh] FAIL: FDC_TEAM=team with FDC_CREDENTIALS_POLICY=A and no FDC_CREDENTIALS_OVERRIDE in scripts/fdc.conf."
+    echo "  Either switch to credentials policy B, or set FDC_CREDENTIALS_OVERRIDE=\"<why plaintext credentials are acceptable for this team>\"."
+    exit 1
 fi
 
 # --- /fdc/ concept metadata --------------------------------------------------
@@ -1721,7 +1838,7 @@ breaks when `.git` is a file rather than a directory, and ignores `core.hooksPat
 ```bash
 #!/usr/bin/env bash
 # scripts/install-hook.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Installs check-docs-fresh.sh as a pre-commit hook in a way that survives
 # git worktrees and submodules (where .git is a file, not a directory) and
@@ -1813,7 +1930,7 @@ server-side hook, or a cron box. Skip it for solo repos.
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-ci.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # CI-agnostic entry point for the FDC doc-freshness check. It resolves the
 # base..HEAD range for the current change, then runs check-docs-fresh.sh against
@@ -1922,7 +2039,7 @@ teammates who don't set it just get the JSON. Portable (stock macOS bash 3.2 + L
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-graph.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Build a portable knowledge graph from the /fdc/ layer. The graph is the thing
 # FDC already mandates: every long-form concept doc has typed frontmatter
@@ -2111,7 +2228,7 @@ The drift checker proves a doc was *touched*; it cannot tell whether a runbook s
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-stale.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # OPTIONAL staleness + trust audit for operational docs. The drift checker
 # proves a doc was TOUCHED alongside code; it cannot tell whether a runbook
@@ -2127,10 +2244,10 @@ The drift checker proves a doc was *touched*; it cannot tell whether a runbook s
 #
 # `verified` accepts three forms:
 #     verified: 2026-09-11
-#     verified: { by: human:bogdan, at: 2026-09-11 }
+#     verified: { by: human:alice, at: 2026-09-11 }
 #     verified:
 #       - { by: claude-code/fable-5.1, at: 2026-09-01 }
-#       - { by: human:bogdan, at: 2026-09-11 }
+#       - { by: human:alice, at: 2026-09-11 }
 #
 # It NEVER fails the build: exit code is always 0. Run it in CI for the report,
 # or by hand before an on-call rotation. Decisions and briefs are not audited.
@@ -2234,7 +2351,7 @@ Newest-first, date-grouped history of every commit that touched `/fdc/`, so an a
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-log.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # OPTIONAL. Regenerates fdc/log.md — a newest-first, date-grouped history of
 # every commit that touched the /fdc/ knowledge layer (OKF "log.md" idea).
@@ -2763,7 +2880,9 @@ And the skip lists must cover every stack's generated artifacts: `SKIP_FILE_REGE
 
 4. **Don't commit during bootstrap.** Show `git status` and `git diff --stat` and ask before running `git commit`, whatever commit policy the user chose for daily work — the bootstrap diff is large and they should see it. Exception: if the repo has no commits yet (fresh `git init`), suggest the initial commit but still wait for confirmation.
 
-5. **The credentials policy is the user's choice (Step 0), not yours.** Under policy A, move any credentials you find into the owning folder doc's `## Access` table with a `Rotated on` date. Under policy B, replace them with `<vault: item>` references and tell the user which values you removed.
+5. **The credentials policy is the user's choice (Step 0), not yours.** Under policy A, move any credentials you find into the owning folder doc's `## Access` table with a `Rotated on` date. Under policy B, replace them with `<vault: item>` references and tell the user which values you removed. Team + A exists only with `FDC_CREDENTIALS_OVERRIDE`; the pre-commit check refuses it otherwise.
+
+5b. **Never quote the target repo inside a question.** The questions are fixed text (Step 0). Describe a conflict with existing files in one neutral sentence; the user knows their own repo and does not need it read back to them.
 
 6. **Respect gitignored areas.** Don't create docs inside `.git/`, `node_modules/`, `target/`, `vendor/`, etc. The drift checker's `SKIP_FOLDER_REGEX` lists the standard ones — match it.
 
@@ -2786,7 +2905,7 @@ When you finish this prompt's work, the repo should have:
 - [ ] Every existing long-form doc has a `status`; plans/specs are in `fdc/work/`; any findings register is split into `fdc/troubleshooting/` notes; `fdc.sh budget` shows the active layer under `FDC_BUDGET_TOTAL_LINES` (or the user has seen the number).
 - [ ] Every existing non-index `/fdc/` long-form doc has required frontmatter and `## See also`.
 - [ ] Per-folder `<folder>.md` index in every top-level folder in scope.
-- [ ] `scripts/fdc.sh`, `scripts/fdc.conf` (no `{{ }}` left), all six sibling scripts (executable), `scripts/scripts.md`, `.githooks/pre-commit`.
+- [ ] `scripts/fdc.sh`, `scripts/fdc.conf` (no `{{ }}` left; `FDC_TEAM` and both policies filled, `FDC_CREDENTIALS_OVERRIDE` set if team + A), all six sibling scripts (executable), `scripts/scripts.md`, `.githooks/pre-commit`.
 - [ ] Hook active: `git config core.hooksPath` = `.githooks` (`fdc.sh doctor` says OK).
 - [ ] (Teams) `scripts/check-docs-ci.sh` wired into CI as a required check; PR template in place; `fdc/log.md` gitignored.
 - [ ] `graphify-out/` added to `.gitignore` (if `fdc-graph.sh` is used).

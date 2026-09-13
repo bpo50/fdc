@@ -97,5 +97,17 @@ r=$(new_repo); mkdir -p "$r/src"; echo "# src" > "$r/src/src.md"; commit_all "$r
 echo "x" > "$r/src/a.py"; echo "# src v2" > "$r/src/src.md"
 expect "code change with owning doc passes" "$r" 0
 
+# Team + credentials A is refused unless FDC_CREDENTIALS_OVERRIDE gives a reason.
+policy_repo() {  # policy_repo <conf-content> — repo with fdc.conf committed and a valid code+doc change staged
+    local r; r=$(new_repo); mkdir -p "$r/src"; echo "# src" > "$r/src/src.md"; printf '%b' "$1" > "$r/scripts/fdc.conf"; commit_all "$r" base
+    echo "x" > "$r/src/a.py"; echo "# v2" > "$r/src/src.md"; echo "$r"
+}
+r=$(policy_repo 'FDC_TEAM="team"\nFDC_CREDENTIALS_POLICY="A"\n')
+expect "team + credentials A without FDC_CREDENTIALS_OVERRIDE is blocked" "$r" 1
+r=$(policy_repo 'FDC_TEAM="team"\nFDC_CREDENTIALS_POLICY="A"\nFDC_CREDENTIALS_OVERRIDE="private LAN, two admins, disks encrypted"\n')
+expect "team + credentials A with FDC_CREDENTIALS_OVERRIDE passes" "$r" 0
+r=$(policy_repo 'FDC_TEAM=""\nFDC_CREDENTIALS_POLICY=""\n')
+expect "unset policies (bootstrap unfinished) do not block commits" "$r" 0
+
 echo; echo "$pass passed, $fail failed"
 [[ $fail -eq 0 ]]

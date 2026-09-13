@@ -153,7 +153,7 @@ honest limitations.
 
 FDC can, by explicit per-repo choice (credentials policy **A**), store real credentials in folder
 docs. That is only for a **private, single-user** repo whose infrastructure is reachable over
-VPN/LAN alone and whose credentials rotate. The bootstrap refuses it for team repos; `doctor`
+VPN/LAN alone and whose credentials rotate. For team repos the pre-commit check refuses it unless `FDC_CREDENTIALS_OVERRIDE` states why; `doctor`
 warns if the two are combined. Default is **B**: vault references only. Encrypt any disk that
 holds a policy-A repo.
 

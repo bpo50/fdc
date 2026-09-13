@@ -1,5 +1,5 @@
 # AGENTS.md
-<!-- fdc-version: 2026.09.11 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
+<!-- fdc-version: 2026.09.13 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it (Claude, Codex, Copilot CLI, Cursor, Gemini, Aider, or any other). If you are Claude Code, also read `CLAUDE.md` afterwards — it adds Claude-only extras. All other agents: this is the only rules file you need.
 
@@ -96,7 +96,7 @@ These rules apply to every agent, whatever model or vendor. They exist because d
 
    <!-- Pick ONE of the two policies below, paste it in place of the placeholder, delete this comment.
 
-   A — DOCUMENTED IN PLACE (local-only infrastructure, VPN/LAN access, frequent rotation):
+   A — DOCUMENTED IN PLACE (local-only infrastructure, VPN/LAN access, frequent rotation, one user; a team repo may use it only with FDC_CREDENTIALS_OVERRIDE="<reason>" in scripts/fdc.conf — then append the sentence "This repo is a team repo running policy A under a recorded override; see scripts/fdc.conf."):
    Infrastructure documented here is reachable only over VPN or the local network and credentials rotate often, so they are written where an agent will look for them: the `## Access` table of the owning folder doc (columns: Service, Host, User, Secret, Rotated on). One row per service, never scattered in prose. When a credential rotates, update the row and its `Rotated on` date in the same change, then `rg` the old value so no stale copy survives. Never paste credentials into commit messages, ADRs, or troubleshooting notes — link to the table.
 
    B — VAULT REFERENCE (public or shared repo):

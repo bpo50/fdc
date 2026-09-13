@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/check-docs-fresh.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Enforces the TOP PRIORITY rule from AGENTS.md: when code changes, the doc that
 # OWNS that code must change in the same commit. It also validates required
@@ -59,6 +59,16 @@ fdc_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 if [[ "${SKIP_DOC_CHECK:-0}" == "1" ]]; then
     echo "[check-docs-fresh] SKIP_DOC_CHECK=1 set — bypassing check."
     exit 0
+fi
+
+# --- policy sanity -----------------------------------------------------------
+# A team repo may keep credentials policy A only with a written reason in
+# FDC_CREDENTIALS_OVERRIDE (see AGENTS.md rule 8 / METHODOLOGY Convention 7).
+# Unset policies (bootstrap not finished yet) never block a commit.
+if [[ "${FDC_TEAM:-}" == team && "${FDC_CREDENTIALS_POLICY:-}" == A && -z "${FDC_CREDENTIALS_OVERRIDE:-}" ]]; then
+    echo "[check-docs-fresh] FAIL: FDC_TEAM=team with FDC_CREDENTIALS_POLICY=A and no FDC_CREDENTIALS_OVERRIDE in scripts/fdc.conf."
+    echo "  Either switch to credentials policy B, or set FDC_CREDENTIALS_OVERRIDE=\"<why plaintext credentials are acceptable for this team>\"."
+    exit 1
 fi
 
 # --- /fdc/ concept metadata --------------------------------------------------

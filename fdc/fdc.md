@@ -57,7 +57,7 @@ These optional fields follow the [Open Knowledge Format](https://github.com/Goog
 generated: { by: claude-code/fable-5.1, at: 2026-09-11 }   # who/what wrote the current content
 verified:                                                  # who confirmed it against reality (latest wins)
   - { by: claude-code/fable-5.1, at: 2026-09-01 }
-  - { by: human:bogdan, at: 2026-09-11 }
+  - { by: human:alice, at: 2026-09-11 }
 stale_after: 2027-03-01          # absolute date; overrides the global staleness threshold for this doc
 sources:                         # what this doc was derived from (ticket, vendor page, commit, another fdc doc)
   - { id: incident-42, resource: https://tracker/…/42, title: Incident 42 }

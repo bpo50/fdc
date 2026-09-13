@@ -30,4 +30,4 @@ for f in fdc.md decisions/decisions.md runbooks/runbooks.md troubleshooting/trou
 chmod +x scripts/*.sh .githooks/pre-commit
 grep -q '^graphify-out/' .gitignore 2>/dev/null || printf '\n# FDC generated output\ngraphify-out/\n' >> .gitignore
 bash scripts/install-hook.sh
-echo "[fdc install] done. Next: edit scripts/fdc.conf (team/policies), then paste LLM_PROMPT.md into an LLM session to write AGENTS.md and the folder docs."
+echo "[fdc install] done. scripts/fdc.conf ships with FDC_TEAM and the two policies EMPTY — paste LLM_PROMPT.md into an LLM session: its Step 0 asks the questions, fills fdc.conf, and writes AGENTS.md and the folder docs."

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/install-hook.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Installs check-docs-fresh.sh as a pre-commit hook in a way that survives
 # git worktrees and submodules (where .git is a file, not a directory) and

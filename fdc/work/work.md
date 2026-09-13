@@ -44,4 +44,4 @@ owners: [human:<id>]
 
 ## Index
 
-_No entries yet._
+- [Bootstrap questions redesign](2026-09-13-bootstrap-questions.md) — Steps to ship the SETUP_QUESTIONS block, unset policies in fdc.conf, and the credentials override. (`done`)

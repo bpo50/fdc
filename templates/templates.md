@@ -12,12 +12,13 @@
 | Template | Drop it at | Purpose |
 |---|---|---|
 | `scripts/fdc.sh` | `<repo-root>/scripts/fdc.sh` | Entry point: `doctor`, `check`, `install-hook`, `update`, `stale`, `log`, `graph`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`. |
-| `scripts/fdc.conf` | `<repo-root>/scripts/fdc.conf` | Per-repo settings (upstream, version, team, policies, thresholds, regex overrides). Ships with `FDC_UPSTREAM` pointing at `https://github.com/bpo50/fdc.git`. The only file a downstream repo edits under `scripts/`. |
+| `scripts/fdc.conf` | `<repo-root>/scripts/fdc.conf` | Per-repo settings (upstream, version, team, policies, `FDC_CREDENTIALS_OVERRIDE`, thresholds, regex overrides). Ships with `FDC_UPSTREAM` pointing at `https://github.com/bpo50/fdc.git` and the three policy fields **empty** (empty = not decided; `doctor` warns). The only file a downstream repo edits under `scripts/`. |
 | `.githooks/pre-commit` | `<repo-root>/.githooks/pre-commit` | Versioned hook; `install-hook` sets `core.hooksPath` to it. |
 | `fdc/notes/notes.md` | `<repo-root>/fdc/notes/notes.md` | Notes index + template (messages with a lifecycle). |
 | `fdc/work/work.md` | `<repo-root>/fdc/work/work.md` | Ephemeral plans/specs index + template; the compaction rule. |
 | `fdc/runbooks/onboard-developer.md` | `<repo-root>/fdc/runbooks/onboard-developer.md` | Five-minute setup runbook for a new teammate or machine. |
 | `PULL_REQUEST_TEMPLATE.md` | your forge's PR template path | Team repos: definition-of-done checklist for reviewers. |
+| `SETUP_QUESTIONS.md` | (inlined into `LLM_PROMPT.md` Step 0; not copied) | The bootstrap questions: three dependency-ordered rounds, each option with consequence, default, cost of later change, and the `fdc.conf` field it writes. The LLM presents them verbatim. |
 | `AGENTS.md` | `<repo-root>/AGENTS.md` | Canonical operating rules + behaviour contract. Fill `{{ … }}` placeholders, including `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` (pick A or B from the comment under each). |
 | `CLAUDE.md` | `<repo-root>/CLAUDE.md` | Thin Claude-only addendum. Fill slash-command list. |
 | `readme.md` | `<repo-root>/readme.md` | Root human entry point (the only README in the repo). |
@@ -51,7 +52,7 @@ Each script carries `# fdc-version: YYYY.MM.DD` on line 2 and `AGENTS.md` carrie
 
 - After editing anything here: `bash tools/build-prompt.sh` regenerates the prompt, `cp templates/scripts/*.sh scripts/` refreshes the installed copy. `bash templates/scripts/tests/*.test.sh` fails until both are done.
 - `fdc.sh update` (and root `install.sh`) clone the release tag quietly with `advice.detachedHead=false`; the temporary clone is deleted and the target repo never leaves its branch.
-- The drift checker requires `status` on decisions and briefs; the CI range mode honours a `Skip-Doc-Check: <reason>` commit trailer; the installer appends to an existing hook and refuses to write through a symlink.
+- The drift checker refuses `FDC_TEAM=team` + `FDC_CREDENTIALS_POLICY=A` unless `FDC_CREDENTIALS_OVERRIDE` is non-empty; empty policy fields never block. It requires `status` on decisions and briefs; the CI range mode honours a `Skip-Doc-Check: <reason>` commit trailer; the installer appends to an existing hook and refuses to write through a symlink.
 - The checker classifies code by extension (`CODE_REGEX`) **and** by basename (`CODE_BASENAME_REGEX`) so `Dockerfile`, `Makefile`, `Justfile`, `.env*` count without an extension.
 - A doc change anywhere under an owner folder satisfies that owner, and deleting a folder together with its index doc is not a violation.
 

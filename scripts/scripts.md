@@ -6,9 +6,9 @@
 
 | File | Purpose |
 |---|---|
-| `fdc.sh` | Entry point (`doctor`, `check`, `update`, `stale`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`, …). |
-| `fdc.conf` | This repo's settings: solo, credentials B, commits A, upstream URL (GitHub). |
-| `check-docs-fresh.sh` | Pre-commit drift check + `/fdc/` metadata validator. |
+| `fdc.sh` | Entry point; `doctor` warns while the bootstrap policies are unset and shows the credentials override reason (`doctor`, `check`, `update`, `stale`, `index`, `notes`, `findings`, `archive`, `prune`, `budget`, `whoami`, …). |
+| `fdc.conf` | This repo's settings: solo, credentials B, commits A, upstream URL (GitHub). `FDC_CREDENTIALS_OVERRIDE` is empty (only meaningful for team + A). |
+| `check-docs-fresh.sh` | Pre-commit drift check + `/fdc/` metadata validator; also refuses team + credentials A without `FDC_CREDENTIALS_OVERRIDE`. |
 | `install-hook.sh` | Installs the pre-commit hook (worktree-safe, honors `core.hooksPath`, appends to an existing hook, leaves symlinked hooks alone). |
 | `check-docs-ci.sh` | Provider-neutral CI backstop, re-checks `base...HEAD`; honours `Skip-Doc-Check:` trailers; prints a soft intent hint. |
 | `fdc-graph.sh` | Optional knowledge-graph extractor from `/fdc/` metadata (See-also links, `related`, `sources`). |

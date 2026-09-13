@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.11
+# fdc-version: 2026.09.13
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent
@@ -239,7 +239,11 @@ cmd_doctor() {
     local missing=""; for t in rg fd jq yq; do command -v "$t" >/dev/null 2>&1 || missing="$missing $t"; done
     [[ -z "$missing" ]] && echo "   tools      OK  rg fd jq yq" || echo "   tools      --  missing:$missing (fall back to grep/find; see AGENTS.md)"
     # team safety
-    if [[ "${FDC_TEAM:-solo}" == team && "${FDC_CREDENTIALS_POLICY:-B}" == A ]]; then echo "   policy     WARN  FDC_TEAM=team with credentials policy A — switch to B"; warn=$((warn+1)); fi
+    if [[ -z "${FDC_TEAM:-}" || -z "${FDC_CREDENTIALS_POLICY:-}" || -z "${FDC_COMMIT_POLICY:-}" ]]; then echo "   policy     WARN  FDC_TEAM / FDC_CREDENTIALS_POLICY / FDC_COMMIT_POLICY not set in scripts/fdc.conf — bootstrap (LLM_PROMPT.md Step 0) not finished"; warn=$((warn+1))
+    elif [[ "$FDC_TEAM" == team && "$FDC_CREDENTIALS_POLICY" == A ]]; then
+        if [[ -n "${FDC_CREDENTIALS_OVERRIDE:-}" ]]; then echo "   policy     WARN  team repo with credentials policy A, override: $FDC_CREDENTIALS_OVERRIDE"; warn=$((warn+1))
+        else echo "   policy     ERROR team repo with credentials policy A and no FDC_CREDENTIALS_OVERRIDE — commits are blocked until you set it or switch to B"; warn=$((warn+1)); fi
+    fi
     # log: regenerate if gitignored (team mode) so it is fresh locally
     if [[ -d fdc ]] && git check-ignore -q fdc/log.md 2>/dev/null; then bash "$S/fdc-log.sh" >/dev/null 2>&1 && echo "   log        OK  fdc/log.md regenerated (gitignored)"; fi
     # notes + briefs
