@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent

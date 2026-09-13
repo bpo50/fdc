@@ -200,7 +200,7 @@ For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this rep
 
 ````markdown
 # AGENTS.md
-<!-- fdc-version: 2026.09.13 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
+<!-- fdc-version: 2026.09.14 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it (Claude, Codex, Copilot CLI, Cursor, Gemini, Aider, or any other). If you are Claude Code, also read `CLAUDE.md` afterwards — it adds Claude-only extras. All other agents: this is the only rules file you need.
 
@@ -1124,12 +1124,12 @@ Fill `FDC_UPSTREAM`, `FDC_TEAM`, the two policies, and (team + credentials A onl
 # scripts/*.sh. This is the ONLY file you edit to configure FDC; the scripts
 # themselves are verbatim upstream copies and are overwritten by `fdc.sh update`.
 #
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 
 # Where updates come from and what is installed. `fdc.sh doctor` compares
 # FDC_VERSION with the newest tag at FDC_UPSTREAM; `fdc.sh update` pulls it.
 FDC_UPSTREAM="https://github.com/bpo50/fdc.git"
-FDC_VERSION="2026.09.13"
+FDC_VERSION="2026.09.14"
 
 # Chosen at bootstrap (LLM_PROMPT.md Step 0; the same choices are pasted into
 # AGENTS.md → "How to work in this repo"). They ship EMPTY on purpose: an empty
@@ -1175,7 +1175,7 @@ exec "$(git rev-parse --show-toplevel)/scripts/check-docs-fresh.sh"
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent
@@ -1465,7 +1465,7 @@ Use the template below. Adjust `CODE_REGEX` to match the project's language exte
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-fresh.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # Enforces the TOP PRIORITY rule from AGENTS.md: when code changes, the doc that
 # OWNS that code must change in the same commit. It also validates required
@@ -1838,7 +1838,7 @@ breaks when `.git` is a file rather than a directory, and ignores `core.hooksPat
 ```bash
 #!/usr/bin/env bash
 # scripts/install-hook.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # Installs check-docs-fresh.sh as a pre-commit hook in a way that survives
 # git worktrees and submodules (where .git is a file, not a directory) and
@@ -1930,7 +1930,7 @@ server-side hook, or a cron box. Skip it for solo repos.
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-ci.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # CI-agnostic entry point for the FDC doc-freshness check. It resolves the
 # base..HEAD range for the current change, then runs check-docs-fresh.sh against
@@ -2039,7 +2039,7 @@ teammates who don't set it just get the JSON. Portable (stock macOS bash 3.2 + L
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-graph.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # Build a portable knowledge graph from the /fdc/ layer. The graph is the thing
 # FDC already mandates: every long-form concept doc has typed frontmatter
@@ -2228,7 +2228,7 @@ The drift checker proves a doc was *touched*; it cannot tell whether a runbook s
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-stale.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # OPTIONAL staleness + trust audit for operational docs. The drift checker
 # proves a doc was TOUCHED alongside code; it cannot tell whether a runbook
@@ -2351,7 +2351,7 @@ Newest-first, date-grouped history of every commit that touched `/fdc/`, so an a
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-log.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # OPTIONAL. Regenerates fdc/log.md — a newest-first, date-grouped history of
 # every commit that touched the /fdc/ knowledge layer (OKF "log.md" idea).

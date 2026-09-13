@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/check-docs-fresh.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # Enforces the TOP PRIORITY rule from AGENTS.md: when code changes, the doc that
 # OWNS that code must change in the same commit. It also validates required

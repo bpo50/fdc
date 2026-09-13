@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc-stale.sh
-# fdc-version: 2026.09.13
+# fdc-version: 2026.09.14
 #
 # OPTIONAL staleness + trust audit for operational docs. The drift checker
 # proves a doc was TOUCHED alongside code; it cannot tell whether a runbook

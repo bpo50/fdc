@@ -1,5 +1,5 @@
 # AGENTS.md
-<!-- fdc-version: 2026.09.13 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
+<!-- fdc-version: 2026.09.14 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it (Claude, Codex, Copilot CLI, Cursor, Gemini, Aider, or any other). If you are Claude Code, also read `CLAUDE.md` afterwards — it adds Claude-only extras. All other agents: this is the only rules file you need.
 
