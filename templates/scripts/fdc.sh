@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent
@@ -192,11 +192,18 @@ cmd_update() {
     [[ -n "$ref" ]] || { echo "[fdc update] no version tags found at $FDC_UPSTREAM"; exit 1; }
     tmp=$(mktemp -d)
     echo "[fdc update] fetching $FDC_UPSTREAM @ $ref"
-    git -c advice.detachedHead=false clone -q --depth 1 --branch "$ref" "$FDC_UPSTREAM" "$tmp/up" || { echo "[fdc update] clone failed"; rm -rf "$tmp"; exit 1; }
+    # init + fetch instead of `clone --branch`: git 2.5x prints "refs/tags/<t> ... is not a commit!" for annotated tags.
+    { git init -q "$tmp/up" && git -C "$tmp/up" fetch -q --depth 1 "$FDC_UPSTREAM" "$ref" \
+      && git -C "$tmp/up" -c advice.detachedHead=false checkout -q FETCH_HEAD; } || { echo "[fdc update] fetch of $ref failed"; rm -rf "$tmp"; exit 1; }
     [[ -d "$tmp/up/templates/scripts" ]] || { echo "[fdc update] upstream has no templates/scripts — wrong URL?"; rm -rf "$tmp"; exit 1; }
     mkdir -p scripts .githooks
-    cp "$tmp/up"/templates/scripts/*.sh scripts/
-    [[ -f "$tmp/up/templates/.githooks/pre-commit" ]] && cp "$tmp/up/templates/.githooks/pre-commit" .githooks/
+    # Install each file as a new inode (copy beside it, then mv): this script is being replaced while bash still reads it.
+    local src dst
+    for src in "$tmp/up"/templates/scripts/*.sh "$tmp/up/templates/.githooks/pre-commit"; do
+        [[ -f "$src" ]] || continue
+        case "$src" in */.githooks/*) dst=".githooks/${src##*/}" ;; *) dst="scripts/${src##*/}" ;; esac
+        cp "$src" "$dst.fdc-new" && mv -f "$dst.fdc-new" "$dst"
+    done
     chmod +x scripts/*.sh .githooks/pre-commit 2>/dev/null || true
     if [[ -f scripts/fdc.conf ]]; then
         sed "s#^FDC_VERSION=.*#FDC_VERSION=\"$ref\"#" scripts/fdc.conf > scripts/fdc.conf.tmp && mv scripts/fdc.conf.tmp scripts/fdc.conf
@@ -270,6 +277,8 @@ cmd_doctor() {
     return 0
 }
 
+# Braces make bash parse the whole dispatcher before running it, so `update` replacing this file mid-run is safe.
+{
 case "${1:-}" in
     doctor)       cmd_doctor ;;
     check)        exec bash "$S/check-docs-fresh.sh" ;;
@@ -288,3 +297,5 @@ case "${1:-}" in
     -h|--help|help|"") usage; [[ -n "${1:-}" ]] ;;
     *)            echo "fdc.sh: unknown subcommand '$1'"; echo; usage; exit 2 ;;
 esac
+exit
+}

@@ -22,5 +22,5 @@ bash tools/build-prompt.sh --check   # what the test suite runs
 ## Gotchas
 
 - Never edit `LLM_PROMPT.md` by hand; the next build overwrites it. Edit `LLM_PROMPT.src.md` for prose, `templates/` for anything inlined.
-- `fdc.sh update` and `install.sh` clone the release tag with `advice.detachedHead=false`, so the temporary clone does not print git's detached-HEAD lecture; the target repo never leaves its branch.
+- `fdc.sh update` and `install.sh` fetch the release tag into a temporary repo (`git init` + `git fetch --depth 1` + checkout `FETCH_HEAD` with `advice.detachedHead=false`), so neither the detached-HEAD lecture nor git 2.5x's annotated-tag "is not a commit!" warning is printed; the target repo never leaves its branch.
 - Included Markdown files are wrapped in four-backtick fences in the source so their own three-backtick code blocks nest correctly.

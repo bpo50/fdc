@@ -51,7 +51,8 @@ Each script carries `# fdc-version: YYYY.MM.DD` on line 2 and `AGENTS.md` carrie
 ## Gotchas
 
 - After editing anything here: `bash tools/build-prompt.sh` regenerates the prompt, `cp templates/scripts/*.sh scripts/` refreshes the installed copy. `bash templates/scripts/tests/*.test.sh` fails until both are done.
-- `fdc.sh update` (and root `install.sh`) clone the release tag quietly with `advice.detachedHead=false`; the temporary clone is deleted and the target repo never leaves its branch.
+- `fdc.sh update` (and root `install.sh`) fetch the release tag into a temporary repo (`git init` + `git fetch --depth 1 <ref>` + checkout `FETCH_HEAD`), not `clone --branch`, which makes git 2.5x warn "refs/tags/<t> ... is not a commit!" on annotated tags. The temporary repo is deleted and the target repo never leaves its branch.
+- `fdc.sh update` replaces `fdc.sh` while bash is still reading it. Each file is installed as a new inode (copy to `<file>.fdc-new`, then `mv`), and the dispatcher `case` is wrapped in `{ …; exit; }` so bash parses it fully before running. Repos on 2026.11.15 or older can still print one harmless parse error on the update that brings this fix; the next update is clean.
 - The drift checker refuses `FDC_TEAM=team` + `FDC_CREDENTIALS_POLICY=A` unless `FDC_CREDENTIALS_OVERRIDE` is non-empty; empty policy fields never block. It requires `status` on decisions and briefs; the CI range mode honours a `Skip-Doc-Check: <reason>` commit trailer; the installer appends to an existing hook and refuses to write through a symlink.
 - The checker classifies code by extension (`CODE_REGEX`) **and** by basename (`CODE_BASENAME_REGEX`) so `Dockerfile`, `Makefile`, `Justfile`, `.env*` count without an extension.
 - A doc change anywhere under an owner folder satisfies that owner, and deleting a folder together with its index doc is not a violation.

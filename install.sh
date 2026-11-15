@@ -19,7 +19,8 @@ if [[ "$cmd" == update && -f scripts/fdc.sh ]]; then exec bash scripts/fdc.sh up
 [[ -n "$ref" ]] || { echo "[fdc install] no version tags at $UPSTREAM"; exit 1; }
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 echo "[fdc install] $UPSTREAM @ $ref"
-git -c advice.detachedHead=false clone -q --depth 1 --branch "$ref" "$UPSTREAM" "$tmp/up"
+# init + fetch instead of `clone --branch`: git 2.5x warns "refs/tags/<t> ... is not a commit!" for annotated tags.
+git init -q "$tmp/up" && git -C "$tmp/up" fetch -q --depth 1 "$UPSTREAM" "$ref" && git -C "$tmp/up" -c advice.detachedHead=false checkout -q FETCH_HEAD
 mkdir -p scripts .githooks fdc/decisions fdc/runbooks fdc/troubleshooting fdc/briefs fdc/notes fdc/work
 cp "$tmp/up"/templates/scripts/*.sh scripts/
 [[ -f scripts/fdc.conf ]] || { cp "$tmp/up/templates/scripts/fdc.conf" scripts/fdc.conf; sed "s#^FDC_UPSTREAM=.*#FDC_UPSTREAM=\"$UPSTREAM\"#; s#^FDC_VERSION=.*#FDC_VERSION=\"$ref\"#" scripts/fdc.conf > scripts/fdc.conf.tmp && mv scripts/fdc.conf.tmp scripts/fdc.conf; }

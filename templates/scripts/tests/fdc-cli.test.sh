@@ -56,6 +56,18 @@ grep -q 'FDC_VERSION="2027.01.01"' "$r/scripts/fdc.conf" && ok "update bumps FDC
 out=$( cd "$r" && bash scripts/fdc.sh update 2026.09.11 2>&1 ); grep -q 'FDC_VERSION="2026.09.11"' "$r/scripts/fdc.conf" && ok "update <ref> pins an explicit tag" || ko "update pin"
 rm -rf "$r" "$up"
 
+# --- update replacing fdc.sh itself (byte offsets shift) from an annotated tag: no parse errors, no git tag warning ---
+up=$(mktemp -d); ( cd "$up" && git init -q -b main && git config user.email u@u && git config user.name u \
+  && mkdir -p templates/scripts templates/.githooks && cp "$T"/*.sh "$T/fdc.conf" templates/scripts/ && cp "$T/../.githooks/pre-commit" templates/.githooks/ \
+  && { head -1 "$T/fdc.sh"; for i in $(seq 1 200); do echo "# padding line $i shifts every byte offset of the running script"; done; tail -n +2 "$T/fdc.sh"; } > templates/scripts/fdc.sh \
+  && git add -A && git commit -qm v3 && git tag -a 2027.02.02 -m "release" )
+r=$(new_repo); ( cd "$r" && sed -i.bak "s#^FDC_UPSTREAM=.*#FDC_UPSTREAM=\"$up\"#" scripts/fdc.conf && rm scripts/fdc.conf.bak )
+out=$( cd "$r" && bash scripts/fdc.sh update 2>&1 ); rc=$?
+[[ $rc -eq 0 && "$out" != *"syntax error"* && "$out" != *"command not found"* && "$out" == *"now at 2027.02.02"* ]] && ok "update survives replacing the running fdc.sh" || ko "update self-overwrite" "rc=$rc out=$out"
+[[ "$out" != *"is not a commit"* ]] && ok "update from an annotated tag prints no git warning" || ko "update annotated tag warning" "$out"
+grep -q 'padding line 200' "$r/scripts/fdc.sh" && ok "update installed the new fdc.sh" || ko "update new fdc.sh"
+rm -rf "$r" "$up"
+
 # --- index generation from frontmatter ---
 r=$(new_repo); ( cd "$r" && fm decision "Use X" "Because Y." 2026-01-02 "status: accepted"$'\n' > fdc/decisions/2026-01-02-use-x.md \
   && fm decision "Use Z" "Because W." 2026-03-04 "status: proposed"$'\n' > fdc/decisions/2026-03-04-use-z.md \

@@ -200,7 +200,7 @@ For `{{CREDENTIALS_POLICY}}` and `{{COMMIT_POLICY}}` in "How to work in this rep
 
 ````markdown
 # AGENTS.md
-<!-- fdc-version: 2026.09.15 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
+<!-- fdc-version: 2026.11.15 — compare with the upstream FDC repo's templates/AGENTS.md; see LLM_UPDATE_PROMPT.md there. -->
 
 **Canonical operating rules for this repo.** Applies to every LLM / agent working on it (Claude, Codex, Copilot CLI, Cursor, Gemini, Aider, or any other). If you are Claude Code, also read `CLAUDE.md` afterwards — it adds Claude-only extras. All other agents: this is the only rules file you need.
 
@@ -1124,12 +1124,12 @@ Fill `FDC_UPSTREAM`, `FDC_TEAM`, the two policies, and (team + credentials A onl
 # scripts/*.sh. This is the ONLY file you edit to configure FDC; the scripts
 # themselves are verbatim upstream copies and are overwritten by `fdc.sh update`.
 #
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 
 # Where updates come from and what is installed. `fdc.sh doctor` compares
 # FDC_VERSION with the newest tag at FDC_UPSTREAM; `fdc.sh update` pulls it.
 FDC_UPSTREAM="https://github.com/bpo50/fdc.git"
-FDC_VERSION="2026.09.15"
+FDC_VERSION="2026.11.15"
 
 # Chosen at bootstrap (LLM_PROMPT.md Step 0; the same choices are pasted into
 # AGENTS.md → "How to work in this repo"). They ship EMPTY on purpose: an empty
@@ -1175,7 +1175,7 @@ exec "$(git rev-parse --show-toplevel)/scripts/check-docs-fresh.sh"
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # Single entry point for the Folder-Doc Convention tooling. Every subcommand
 # is a thin wrapper over the sibling scripts; `doctor` is the one an agent
@@ -1367,11 +1367,18 @@ cmd_update() {
     [[ -n "$ref" ]] || { echo "[fdc update] no version tags found at $FDC_UPSTREAM"; exit 1; }
     tmp=$(mktemp -d)
     echo "[fdc update] fetching $FDC_UPSTREAM @ $ref"
-    git -c advice.detachedHead=false clone -q --depth 1 --branch "$ref" "$FDC_UPSTREAM" "$tmp/up" || { echo "[fdc update] clone failed"; rm -rf "$tmp"; exit 1; }
+    # init + fetch instead of `clone --branch`: git 2.5x prints "refs/tags/<t> ... is not a commit!" for annotated tags.
+    { git init -q "$tmp/up" && git -C "$tmp/up" fetch -q --depth 1 "$FDC_UPSTREAM" "$ref" \
+      && git -C "$tmp/up" -c advice.detachedHead=false checkout -q FETCH_HEAD; } || { echo "[fdc update] fetch of $ref failed"; rm -rf "$tmp"; exit 1; }
     [[ -d "$tmp/up/templates/scripts" ]] || { echo "[fdc update] upstream has no templates/scripts — wrong URL?"; rm -rf "$tmp"; exit 1; }
     mkdir -p scripts .githooks
-    cp "$tmp/up"/templates/scripts/*.sh scripts/
-    [[ -f "$tmp/up/templates/.githooks/pre-commit" ]] && cp "$tmp/up/templates/.githooks/pre-commit" .githooks/
+    # Install each file as a new inode (copy beside it, then mv): this script is being replaced while bash still reads it.
+    local src dst
+    for src in "$tmp/up"/templates/scripts/*.sh "$tmp/up/templates/.githooks/pre-commit"; do
+        [[ -f "$src" ]] || continue
+        case "$src" in */.githooks/*) dst=".githooks/${src##*/}" ;; *) dst="scripts/${src##*/}" ;; esac
+        cp "$src" "$dst.fdc-new" && mv -f "$dst.fdc-new" "$dst"
+    done
     chmod +x scripts/*.sh .githooks/pre-commit 2>/dev/null || true
     if [[ -f scripts/fdc.conf ]]; then
         sed "s#^FDC_VERSION=.*#FDC_VERSION=\"$ref\"#" scripts/fdc.conf > scripts/fdc.conf.tmp && mv scripts/fdc.conf.tmp scripts/fdc.conf
@@ -1445,6 +1452,8 @@ cmd_doctor() {
     return 0
 }
 
+# Braces make bash parse the whole dispatcher before running it, so `update` replacing this file mid-run is safe.
+{
 case "${1:-}" in
     doctor)       cmd_doctor ;;
     check)        exec bash "$S/check-docs-fresh.sh" ;;
@@ -1463,6 +1472,8 @@ case "${1:-}" in
     -h|--help|help|"") usage; [[ -n "${1:-}" ]] ;;
     *)            echo "fdc.sh: unknown subcommand '$1'"; echo; usage; exit 2 ;;
 esac
+exit
+}
 ```
 
 ## File: `scripts/check-docs-fresh.sh`
@@ -1472,7 +1483,7 @@ Use the template below. Adjust `CODE_REGEX` to match the project's language exte
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-fresh.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # Enforces the TOP PRIORITY rule from AGENTS.md: when code changes, the doc that
 # OWNS that code must change in the same commit. It also validates required
@@ -1845,7 +1856,7 @@ breaks when `.git` is a file rather than a directory, and ignores `core.hooksPat
 ```bash
 #!/usr/bin/env bash
 # scripts/install-hook.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # Installs check-docs-fresh.sh as a pre-commit hook in a way that survives
 # git worktrees and submodules (where .git is a file, not a directory) and
@@ -1937,7 +1948,7 @@ server-side hook, or a cron box. Skip it for solo repos.
 ```bash
 #!/usr/bin/env bash
 # scripts/check-docs-ci.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # CI-agnostic entry point for the FDC doc-freshness check. It resolves the
 # base..HEAD range for the current change, then runs check-docs-fresh.sh against
@@ -2046,7 +2057,7 @@ teammates who don't set it just get the JSON. Portable (stock macOS bash 3.2 + L
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-graph.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # Build a portable knowledge graph from the /fdc/ layer. The graph is the thing
 # FDC already mandates: every long-form concept doc has typed frontmatter
@@ -2235,7 +2246,7 @@ The drift checker proves a doc was *touched*; it cannot tell whether a runbook s
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-stale.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # OPTIONAL staleness + trust audit for operational docs. The drift checker
 # proves a doc was TOUCHED alongside code; it cannot tell whether a runbook
@@ -2358,7 +2369,7 @@ Newest-first, date-grouped history of every commit that touched `/fdc/`, so an a
 ```bash
 #!/usr/bin/env bash
 # scripts/fdc-log.sh
-# fdc-version: 2026.09.15
+# fdc-version: 2026.11.15
 #
 # OPTIONAL. Regenerates fdc/log.md — a newest-first, date-grouped history of
 # every commit that touched the /fdc/ knowledge layer (OKF "log.md" idea).
